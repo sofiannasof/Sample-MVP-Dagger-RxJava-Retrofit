@@ -1,6 +1,7 @@
 package com.sample.mvp.dagger_rxjava_retrofit.mvp;
 
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -22,6 +23,10 @@ public class ListMovieActivity extends AppCompatActivity implements MovieContrac
 
     private Movie movie;
     private MovieContract.Presenter listMovieActivityPresenter;
+    private SwipeRefreshLayout refreshLayout;
+    final CardAdapter mCardAdapter = new CardAdapter();
+
+
 
     @Inject
     AppRemoteDataStore appRemoteDataStore;
@@ -38,8 +43,9 @@ public class ListMovieActivity extends AppCompatActivity implements MovieContrac
         RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        final CardAdapter mCardAdapter = new CardAdapter();
+        //this.mCardAdapter = new CardAdapter();
         mRecyclerView.setAdapter(mCardAdapter);
+        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.photo_refresh);
 
         Button bClear = (Button) findViewById(R.id.button_clear);
         Button bFetch = (Button) findViewById(R.id.button_fetch);
@@ -52,6 +58,16 @@ public class ListMovieActivity extends AppCompatActivity implements MovieContrac
             mCardAdapter.addData(movie.getResults());
         });
 
+
+        refreshLayout.setOnRefreshListener(() -> refreshCards());
+
+    }
+
+    private void refreshCards() {
+        mCardAdapter.clear();
+        listMovieActivityPresenter.loadMovieDetails();
+        mCardAdapter.addData(movie.getResults());
+        refreshLayout.setRefreshing(false);
     }
 
     @Override
