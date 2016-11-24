@@ -51,22 +51,21 @@ public class ListMovieActivity extends AppCompatActivity implements MovieContrac
         Button bFetch = (Button) findViewById(R.id.button_fetch);
         bClear.setOnClickListener(v -> mCardAdapter.clear());
 
-        //bFetch.setOnClickListener(v -> mCardAdapter.addData(movie.getResults()));
-
         bFetch.setOnClickListener(v -> {
             listMovieActivityPresenter.loadMovieDetails();
-            mCardAdapter.addData(movie.getResults());
+            if(movie!=null)
+                mCardAdapter.addData(movie.getResults());
         });
 
 
         refreshLayout.setOnRefreshListener(() -> refreshCards());
-
     }
 
     private void refreshCards() {
         mCardAdapter.clear();
         listMovieActivityPresenter.loadMovieDetails();
-        mCardAdapter.addData(movie.getResults());
+        if(movie!=null)
+            mCardAdapter.addData(movie.getResults());
         refreshLayout.setRefreshing(false);
     }
 
