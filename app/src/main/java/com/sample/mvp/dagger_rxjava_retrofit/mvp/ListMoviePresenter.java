@@ -5,7 +5,7 @@ import android.util.Log;
 import com.sample.mvp.dagger_rxjava_retrofit.data.AppRemoteDataStore;
 import com.sample.mvp.dagger_rxjava_retrofit.data.MovieApplication;
 
-import rx.Subscriber;
+import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -34,7 +34,7 @@ public class ListMoviePresenter implements MovieContract.Presenter {
         subscription = appRemoteDataStore.getMoviesPopular(MovieApplication.API_KEY, page)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<Movie>() {
+                .subscribe(new Observer<Movie>() {
                     @Override
                     public final void onCompleted() {
                         Log.d("movie","completed"+" page = " +page);
@@ -62,9 +62,7 @@ public class ListMoviePresenter implements MovieContract.Presenter {
 
     @Override
     public void unsubscribe() {
-
         if (subscription != null && subscription.isUnsubscribed())
             subscription.unsubscribe();
-
     }
 }

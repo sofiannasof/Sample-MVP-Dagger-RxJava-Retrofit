@@ -1,14 +1,14 @@
 package com.sample.mvp.dagger_rxjava_retrofit.mvp;
 
 import android.os.Bundle;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.widget.Button;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.sample.mvp.dagger_rxjava_retrofit.MovieListener;
+import com.sample.mvp.dagger_rxjava_retrofit.LoadListener;
 import com.sample.mvp.dagger_rxjava_retrofit.R;
 import com.sample.mvp.dagger_rxjava_retrofit.adapter.HomeAdapter;
 import com.sample.mvp.dagger_rxjava_retrofit.data.AppRemoteDataStore;
@@ -20,13 +20,14 @@ import javax.inject.Inject;
  * Created by smenesid on 21/11/2016.
  */
 
-public class ListMovieActivity extends AppCompatActivity implements MovieContract.View, MovieListener {
+public class ListMovieActivity extends AppCompatActivity implements MovieContract.View, LoadListener {
 
     private Movie movie;
     private MovieContract.Presenter listMovieActivityPresenter;
-    private SwipeRefreshLayout refreshLayout;
+    //private SwipeRefreshLayout refreshLayout;
     private HomeAdapter mHomeAdapter;
-    private int mCurrentMoviePageNumber = 1;
+    private int mCurrentMoviePageNumber = 0;
+    private ProgressBar progressBar;
 
     @Inject
     AppRemoteDataStore appRemoteDataStore;
@@ -36,60 +37,37 @@ public class ListMovieActivity extends AppCompatActivity implements MovieContrac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         MovieApplication.getAppComponent().inject(this);
+        new ListMoviePresenter(appRemoteDataStore, this);
+
+        fetchPage();
 
         RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
         mHomeAdapter = new HomeAdapter();
 
         //Calling loadMore function in Runnable to fix the
         // java.lang.IllegalStateException: Cannot call this method while RecyclerView is computing a layout or scrolling error
-        mHomeAdapter.setOnMovieClickedListener(() -> mRecyclerView.post(() -> {
-            fetchPage();
-        }));
-
-        new ListMoviePresenter(appRemoteDataStore, this);
-        listMovieActivityPresenter.loadMovieDetails(mCurrentMoviePageNumber);
+        mHomeAdapter.setOnMovieClickedListener(() -> mRecyclerView.post(() -> fetchPage()));
 
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(mHomeAdapter);
-
-        if(movie!=null)
-            mHomeAdapter.addData(movie.getResults());
-
-        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.photo_refresh);
-        refreshLayout.setOnRefreshListener(() -> refreshCards());
-
-
-        Button bClear = (Button) findViewById(R.id.button_clear);
-        bClear.setOnClickListener(v -> {
-            mCurrentMoviePageNumber = 0;
-            mHomeAdapter.clear();
-        });
-
-        Button bFetch = (Button) findViewById(R.id.button_fetch);
-        bFetch.setOnClickListener(v -> {
-            fetchPage();
-        });
     }
 
     private void fetchPage() {
         mCurrentMoviePageNumber++;
         listMovieActivityPresenter.loadMovieDetails(mCurrentMoviePageNumber);
-        if(movie!=null)
+        if(movie!=null) {
             mHomeAdapter.addData(movie.getResults());
-    }
-
-    private void refreshCards() {
-        mCurrentMoviePageNumber = 0;
-        mHomeAdapter.clear();
-        fetchPage();
-        refreshLayout.setRefreshing(false);
+            progressBar.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
     public void showMovieDetails(Movie movie) {
         this.movie = movie;
+        mHomeAdapter.addData(movie.getResults());
+        progressBar.setVisibility(View.VISIBLE);
     }
 
     @Override
