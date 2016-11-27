@@ -26,38 +26,38 @@ public class ListMoviePresenter implements MovieContract.Presenter {
     }
 
     @Override
-    public void loadMovieDetails() {
+    public void loadMovieDetails(int page) {
         if (appRemoteDataStore == null) {
             appRemoteDataStore = new AppRemoteDataStore();
         }
 
-        subscription = appRemoteDataStore.getMoviesPopular(MovieApplication.API_KEY)
+        subscription = appRemoteDataStore.getMoviesPopular(MovieApplication.API_KEY, page)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Movie>() {
                     @Override
                     public final void onCompleted() {
-                        Log.d("movie","completed");
+                        Log.d("movie","completed"+" page = " +page);
                         view.showComplete();
                     }
 
                     @Override
                     public final void onError(Throwable e) {
-                        Log.e("movie",e.getMessage());
+                        Log.e("movie",e.getMessage()+" page = " +page);
                         view.showError(e.toString());
                     }
 
                     @Override
                     public void onNext(Movie movie) {
-                        Log.d("movie","transfer success");
+                        Log.d("movie","transfer success"+" page = " +page);
                         view.showMovieDetails(movie);
                     }
                 });
     }
 
     @Override
-    public void subscribe() {
-        loadMovieDetails();
+    public void subscribe(int page) {
+        loadMovieDetails(page);
     }
 
     @Override

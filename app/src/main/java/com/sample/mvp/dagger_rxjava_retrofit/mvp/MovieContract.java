@@ -18,6 +18,6 @@ public class MovieContract {
     }
 
     public interface Presenter extends BasePresenter {
-        void loadMovieDetails();
+        void loadMovieDetails(int page);
     }
 }

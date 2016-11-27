@@ -8,8 +8,9 @@ import android.support.v7.widget.RecyclerView;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.sample.mvp.dagger_rxjava_retrofit.MovieListener;
 import com.sample.mvp.dagger_rxjava_retrofit.R;
-import com.sample.mvp.dagger_rxjava_retrofit.adapter.CardAdapter;
+import com.sample.mvp.dagger_rxjava_retrofit.adapter.HomeAdapter;
 import com.sample.mvp.dagger_rxjava_retrofit.data.AppRemoteDataStore;
 import com.sample.mvp.dagger_rxjava_retrofit.data.MovieApplication;
 
@@ -19,14 +20,13 @@ import javax.inject.Inject;
  * Created by smenesid on 21/11/2016.
  */
 
-public class ListMovieActivity extends AppCompatActivity implements MovieContract.View {
+public class ListMovieActivity extends AppCompatActivity implements MovieContract.View, MovieListener {
 
     private Movie movie;
     private MovieContract.Presenter listMovieActivityPresenter;
     private SwipeRefreshLayout refreshLayout;
-    final CardAdapter mCardAdapter = new CardAdapter();
-
-
+    private HomeAdapter mHomeAdapter;
+    private int mCurrentMoviePageNumber = 1;
 
     @Inject
     AppRemoteDataStore appRemoteDataStore;
@@ -37,35 +37,53 @@ public class ListMovieActivity extends AppCompatActivity implements MovieContrac
         setContentView(R.layout.activity_main);
         MovieApplication.getAppComponent().inject(this);
 
-        new ListMoviePresenter(appRemoteDataStore, this);
-        listMovieActivityPresenter.loadMovieDetails();
-
         RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        mHomeAdapter = new HomeAdapter();
+
+        //Calling loadMore function in Runnable to fix the
+        // java.lang.IllegalStateException: Cannot call this method while RecyclerView is computing a layout or scrolling error
+        mHomeAdapter.setOnMovieClickedListener(() -> mRecyclerView.post(() -> {
+            fetchPage();
+        }));
+
+        new ListMoviePresenter(appRemoteDataStore, this);
+        listMovieActivityPresenter.loadMovieDetails(mCurrentMoviePageNumber);
+
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        //this.mCardAdapter = new CardAdapter();
-        mRecyclerView.setAdapter(mCardAdapter);
+        mRecyclerView.setAdapter(mHomeAdapter);
+
+        if(movie!=null)
+            mHomeAdapter.addData(movie.getResults());
+
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.photo_refresh);
+        refreshLayout.setOnRefreshListener(() -> refreshCards());
+
 
         Button bClear = (Button) findViewById(R.id.button_clear);
-        Button bFetch = (Button) findViewById(R.id.button_fetch);
-        bClear.setOnClickListener(v -> mCardAdapter.clear());
-
-        bFetch.setOnClickListener(v -> {
-            listMovieActivityPresenter.loadMovieDetails();
-            if(movie!=null)
-                mCardAdapter.addData(movie.getResults());
+        bClear.setOnClickListener(v -> {
+            mCurrentMoviePageNumber = 0;
+            mHomeAdapter.clear();
         });
 
+        Button bFetch = (Button) findViewById(R.id.button_fetch);
+        bFetch.setOnClickListener(v -> {
+            fetchPage();
+        });
+    }
 
-        refreshLayout.setOnRefreshListener(() -> refreshCards());
+    private void fetchPage() {
+        mCurrentMoviePageNumber++;
+        listMovieActivityPresenter.loadMovieDetails(mCurrentMoviePageNumber);
+        if(movie!=null)
+            mHomeAdapter.addData(movie.getResults());
     }
 
     private void refreshCards() {
-        mCardAdapter.clear();
-        listMovieActivityPresenter.loadMovieDetails();
-        if(movie!=null)
-            mCardAdapter.addData(movie.getResults());
+        mCurrentMoviePageNumber = 0;
+        mHomeAdapter.clear();
+        fetchPage();
         refreshLayout.setRefreshing(false);
     }
 
@@ -87,6 +105,11 @@ public class ListMovieActivity extends AppCompatActivity implements MovieContrac
     @Override
     public void setPresenter(MovieContract.Presenter presenter) {
         listMovieActivityPresenter = presenter;
+    }
+
+    @Override
+    public void onLoadMoreData() {
+        fetchPage();
     }
 }
 

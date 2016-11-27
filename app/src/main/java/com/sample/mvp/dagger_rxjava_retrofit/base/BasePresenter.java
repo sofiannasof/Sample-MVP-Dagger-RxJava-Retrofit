@@ -5,7 +5,7 @@ package com.sample.mvp.dagger_rxjava_retrofit.base;
  */
 
 public interface BasePresenter {
-    void subscribe();
+    void subscribe(int page);
 
     void unsubscribe();
 }

@@ -13,6 +13,6 @@ import rx.Observable;
 public interface MovieService {
 
     @GET("/3/movie/popular")
-    Observable<Movie> getMoviesPopular(@Query("api_key") String apiKey);
+    Observable<Movie> getMoviesPopular(@Query("api_key") String apiKey, @Query("page") int page);
 
 }
