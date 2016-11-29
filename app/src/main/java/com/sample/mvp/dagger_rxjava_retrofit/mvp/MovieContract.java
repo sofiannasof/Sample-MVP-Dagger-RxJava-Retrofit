@@ -15,6 +15,8 @@ public class MovieContract {
         void showError(String message);
 
         void showComplete();
+
+        //void showProgressDialog(boolean visible);
     }
 
     public interface Presenter extends BasePresenter {
